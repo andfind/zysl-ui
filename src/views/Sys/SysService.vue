@@ -15,10 +15,11 @@
       </el-form>
     </div>
     <!--表格内容栏-->
-    <kt-table permsEdit="sys:sysService:edit" permsDelete="sys:sysService:delete"
+    <kt-service-table permsEdit="sys:sysService:edit" permsDelete="sys:sysService:delete"
+              permsCreateJwt="sys:sysService:createJwt"
               :data="pageResult" :columns="columns"
-              @findPage="findPage" @handleEdit="handleEdit" @handleDelete="handleDelete">
-    </kt-table>
+              @findPage="findPage" @handleEdit="handleEdit" @handleCreateJwt="handleCreateJwt" @handleDelete="handleDelete">
+    </kt-service-table>
     <!--新增编辑界面-->
     <el-dialog :title="operation?'新增':'编辑'" width="40%" :visible.sync="editDialogVisible" :close-on-click-modal="false">
       <el-form :model="dataForm" label-width="100px" :rules="dataFormRules" ref="dataForm" :size="size">
@@ -49,6 +50,9 @@
         <el-form-item label="微服务描述" prop="remark">
           <el-input v-model="dataForm.remark" auto-complete="off"></el-input>
         </el-form-item>
+        <el-form-item label="加密key" prop="secret">
+          <el-input v-model="dataForm.secret" auto-complete="off"></el-input>
+        </el-form-item>
         <el-form-item label="创建人" prop="createBy"  v-if="false">
           <el-input v-model="dataForm.createBy" auto-complete="off"></el-input>
         </el-form-item>
@@ -70,17 +74,37 @@
         <el-button :size="size" type="primary" @click.native="submitForm" :loading="editLoading">{{$t('action.submit')}}</el-button>
       </div>
     </el-dialog>
+
+    <!--生成jwt界面-->
+    <el-dialog :title="生成jwt" width="40%" :visible.sync="jwtDialogVisible" :close-on-click-modal="false">
+      <el-form :model="dataForm" label-width="100px" :rules="dataFormRules" ref="dataForm" :size="size">
+        <el-form-item label="id" prop="id"  v-if="dataForm.isPrimaryKey">
+          <el-input v-model="dataForm.id" auto-complete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="微服务描述" prop="remark">
+          <el-input v-model="dataForm.remark" auto-complete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="微服务描述" prop="remark">
+          <el-input v-model="dataForm.remark" auto-complete="off"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button :size="size" @click.native="jwtDialogVisible = false">{{$t('action.cancel')}}</el-button>
+        <el-button :size="size" type="primary" @click.native="submitForm" :loading="editLoading">{{$t('action.submit')}}</el-button>
+      </div>
+    </el-dialog>
+
   </div>
 </template>
 
 <script>
-    import KtTable from "@/views/Core/KtTable"
+    import KtServiceTable from "@/views/Core/KtServiceTable"
     import KtButton from "@/views/Core/KtButton"
     import BaseSelector from "@/components/BaseSelector"
     import { format } from "@/utils/datetime"
     export default {
         components:{
-            KtTable,
+            KtServiceTable,
             KtButton,
             BaseSelector
         },
@@ -98,6 +122,7 @@
                     {prop:"gateCode", label:"网关编号", minWidth:100},
                     {prop:"developer", label:"开发负责人", minWidth:100},
                     {prop:"remark", label:"微服务描述", minWidth:100},
+                    {prop:"secret", label:"加密key", minWidth:100},
                 ],
                 pageRequest: { pageNum: 1, pageSize: 8 },
                 subSysPageRequest:{ pageNum: 1, pageSize: 999 },
@@ -121,6 +146,7 @@
                     gateCode: null,
                     developer: null,
                     remark: null,
+                    secret: null,
                     createBy: null,
                     createTime: null,
                     lastUpdateBy: null,
@@ -162,6 +188,7 @@
                     gateCode: '',
                     developer: '',
                     remark: '',
+                    secret:'',
                     createBy: '',
                     createTime: '',
                     lastUpdateBy: '',
@@ -203,6 +230,16 @@
                     }
                 })
             },
+
+            // 显示jwt生成界面
+            handleCreateJwt: function (params) {
+                this.jwtDialogVisible = true
+                this.operation = false
+                this.dataForm = Object.assign({}, params.row)
+
+
+            },
+
             // 时间格式化
             dateFormat: function (row, column, cellValue, index){
                 return format(row[column.property])
