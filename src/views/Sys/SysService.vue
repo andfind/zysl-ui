@@ -77,20 +77,20 @@
 
     <!--生成jwt界面-->
     <el-dialog :title="生成jwt" width="40%" :visible.sync="jwtDialogVisible" :close-on-click-modal="false">
-      <el-form :model="dataForm" label-width="100px" :rules="dataFormRules" ref="dataForm" :size="size">
+      <el-form :model="dataForm" label-width="100px" ref="dataForm" :size="size">
         <el-form-item label="id" prop="id"  v-if="dataForm.isPrimaryKey">
           <el-input v-model="dataForm.id" auto-complete="off"></el-input>
         </el-form-item>
-        <el-form-item label="微服务描述" prop="remark">
-          <el-input v-model="dataForm.remark" auto-complete="off"></el-input>
+        <el-form-item label="角色列表" prop="remark">
+          <el-input v-model="dataForm.userRoles" auto-complete="off"></el-input>
         </el-form-item>
-        <el-form-item label="微服务描述" prop="remark">
-          <el-input v-model="dataForm.remark" auto-complete="off"></el-input>
+        <el-form-item label="有效期" prop="remark">
+          <el-input v-model="dataForm.validity" auto-complete="off"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button :size="size" @click.native="jwtDialogVisible = false">{{$t('action.cancel')}}</el-button>
-        <el-button :size="size" type="primary" @click.native="submitForm" :loading="editLoading">{{$t('action.submit')}}</el-button>
+        <el-button :size="size" type="primary" @click.native="submitFormJwt" :loading="editLoading">{{$t('action.submit')}}</el-button>
       </div>
     </el-dialog>
 
@@ -130,6 +130,7 @@
 
                 operation: false, // true:新增, false:编辑
                 editDialogVisible: false, // 新增编辑界面是否显示
+                jwtDialogVisible: false,
                 editLoading: false,
                 dataFormRules: {
                     label: [
@@ -236,8 +237,31 @@
                 this.jwtDialogVisible = true
                 this.operation = false
                 this.dataForm = Object.assign({}, params.row)
+            },
+             // 编辑jwt
+            submitFormJwt: function () {
+                this.$refs.dataForm.validate((valid) => {
+                    if (valid) {
+                        this.$confirm('确认提交吗？', '提示', {}).then(() => {
+                            this.editLoading = true
+                            let params = Object.assign({}, this.dataForm)
+                            this.$api.sysService.createJwt(params).then((res) => {
+                                if(res.code == 200) {
+                                    this.$alert(res.msg);
 
+                                 //   this.$message({ dangerouslyUseHTMLString: true,
+                                   //               message: '操作成功:' + res.msg, type: 'error' })
+                                } else {
+                                    this.$message({message: '操作失败, ' + res.msg, type: 'error'})
+                                }
+                                this.editLoading = false
+                                this.$refs['dataForm'].resetFields()
+                                this.jwtDialogVisible = false
 
+                            })
+                        })
+                    }
+                })
             },
 
             // 时间格式化
